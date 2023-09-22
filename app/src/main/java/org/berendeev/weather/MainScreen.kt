@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import org.berendeev.weather.currentweather.CurrentWeatherScreen
+import org.berendeev.weather.selectplace.SelectPlaceScreen
 
 @Composable
 fun MainScreen() {
@@ -20,7 +21,11 @@ fun MainScreen() {
             )
         }
         composable("select-city-screen") {
-            SelectCityScreen()
+            SelectPlaceScreen(
+                onPlaceSelected = {},
+                onClose = { navController.popBackStack() },
+                viewModel = hiltViewModel()
+            )
         }
     }
 }
