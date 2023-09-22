@@ -8,9 +8,14 @@ import javax.inject.Inject
 
 class ForecastDatasource @Inject constructor(private val httpClient: HttpClient) {
 
-    suspend fun fetchForecast() {
+    suspend fun fetchForecast(): ApiModel {
         // todo map exceptions
-        return httpClient.get("https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m&forecast_days=1").body()
+        return httpClient.get(
+            "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41" +
+                    "&hourly=temperature_2m" +
+                    "&current_weather=true" +
+                    "&forecast_days=1"
+        ).body()
     }
 
     @Serializable

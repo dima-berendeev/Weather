@@ -2,7 +2,10 @@ package org.berendeev.weather.currentweather
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,9 +18,20 @@ fun CurrentWeatherScreen(
     viewModel: CurrentWeatherViewModel,
     modifier: Modifier = Modifier,
 ) {
-    viewModel.currentCity
-    Column(modifier = modifier) {
-        CurrentCity(name = viewModel.currentCity, onCurrentCityClick, Modifier.fillMaxWidth())
+
+    Column(modifier = modifier.fillMaxSize()) {
+        CurrentCity(name = "????", onCurrentCityClick, Modifier.fillMaxWidth())
+        Text(
+            text = viewModel.temperature?.toString()?:"?????",
+            style = MaterialTheme.typography.displayLarge,
+            textAlign = TextAlign.Center,
+            modifier = modifier
+                .fillMaxSize()
+                .wrapContentSize()
+                .clickable {
+                    onCurrentCityClick()
+                }
+        )
     }
 }
 
