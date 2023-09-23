@@ -18,7 +18,7 @@ class PlacesRepository @Inject constructor(
     suspend fun fetchVariants(query: String): List<PlaceVariant> {
         return withContext(ioDispatcher) {
             val apiModel = geoCodingDataSource.fetch(query)
-            apiModel.results.map { createPlaceVariant(it) } ?: emptyList()
+            apiModel.results.map { createPlaceVariant(it) }
         }
     }
 

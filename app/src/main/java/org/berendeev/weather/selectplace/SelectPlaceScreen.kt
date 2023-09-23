@@ -1,7 +1,9 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.berendeev.weather.selectplace
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,16 +26,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun SelectPlaceScreen(
     onPlaceSelected: (Place) -> Unit,
+    onCurrentLocationSelected: () -> Unit,
     onClose: () -> Unit,
     viewModel: SelectPlaceViewModel,
     modifier: Modifier = Modifier
@@ -43,14 +44,11 @@ fun SelectPlaceScreen(
             .fillMaxSize()
     ) {
         val uiState by viewModel.uiStateFlow.collectAsState()
-//        val variants: List<SelectPlaceViewModel.PlaceVariant> = (0..10).map {
-//            SelectPlaceViewModel.PlaceVariant(it.toString(), Latitude(0.0), Longitude(0.0))
-//        }
-        val variants: List<SelectPlaceViewModel.PlaceVariant> = uiState?.variants ?: emptyList()
+        val variants: List<SelectPlaceUiState.PlaceVariant> = uiState?.variants ?: emptyList()
 
         val query = viewModel.queryStateFlow.collectAsState().value
 
-        Row() {
+        Row {
             IconButton(
                 modifier = Modifier.align(Alignment.CenterVertically),
                 onClick = { onClose() }
@@ -81,22 +79,52 @@ fun SelectPlaceScreen(
             )
         }
 
-        LazyColumn(
-            modifier = Modifier
-
+        Places(
+            variants,
+            Modifier
                 .weight(1.0f)
-                .fillMaxWidth()
-                .imePadding()
-        ) {
-            items(variants) { variant ->
-                ListItem(headlineText = {
+                .fillMaxWidth(),
+            onPlaceClicked = { placeVariant ->
+                val place = Place(placeVariant.name, placeVariant.latitude, placeVariant.longitude)
+                onPlaceSelected(place)
+            },
+            onCurrentLocationClicked = { onCurrentLocationSelected() }
+        )
+    }
+}
+
+@Composable
+private fun Places(
+    variants: List<SelectPlaceUiState.PlaceVariant>,
+    modifier: Modifier,
+    onPlaceClicked: (SelectPlaceUiState.PlaceVariant) -> Unit,
+    onCurrentLocationClicked: () -> Unit
+) {
+    LazyColumn(
+        modifier = modifier
+            .imePadding()
+    ) {
+        item {
+            ListItem(
+                modifier = Modifier.clickable { onCurrentLocationClicked() },
+                headlineText = {
+                    Text(
+                        text = "Current location",
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            )
+        }
+        items(variants) { variant ->
+            ListItem(
+                modifier = Modifier.clickable { onPlaceClicked(variant) },
+                headlineText = {
                     Text(
                         text = variant.name,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                })
-
-            }
+                }
+            )
         }
     }
 }
