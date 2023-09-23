@@ -11,6 +11,7 @@ import org.berendeev.weather.selectplace.SelectPlaceScreen
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
+    val mainViewModel: MainViewModel = hiltViewModel()
     NavHost(navController = navController, startDestination = "home-screen") {
         fun pop() {
             navController.popBackStack()
@@ -25,9 +26,15 @@ fun MainScreen() {
         }
         composable("select-city-screen") {
             SelectPlaceScreen(
-                onPlaceSelected = { pop() },
+                onPlaceSelected = { place ->
+                    pop()
+                    mainViewModel.usePlace(place)
+                },
                 onClose = { pop() },
-                onCurrentLocationSelected = { pop() },
+                onCurrentLocationSelected = {
+                    pop()
+                    mainViewModel.useCurrentLocation()
+                },
                 viewModel = hiltViewModel()
             )
         }

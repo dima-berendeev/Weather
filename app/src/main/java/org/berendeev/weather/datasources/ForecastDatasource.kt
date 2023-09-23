@@ -5,6 +5,8 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.berendeev.weather.models.Latitude
+import org.berendeev.weather.models.Longitude
 import javax.inject.Inject
 
 class ForecastDatasource @Inject constructor(private val httpClient: HttpClient) {
@@ -12,19 +14,25 @@ class ForecastDatasource @Inject constructor(private val httpClient: HttpClient)
         ignoreUnknownKeys = true
     }
 
-
-    suspend fun fetchForecast(): ApiModel {
-        if (true) {
+    suspend fun fetchForecast(latitude: Latitude, longitude: Longitude): ApiModel {
+        if (false) {
             return json.decodeFromString(mockJsonString)
         }
 
         // todo map exceptions
         return httpClient.get(
-            "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41" +
+            "https://api.open-meteo.com/v1/forecast?" +
                     "&hourly=temperature_2m" +
                     "&current_weather=true" +
                     "&forecast_days=1"
-        ).body()
+        ) {
+            url {
+                parameters.apply {
+                    append("latitude", latitude.asDouble.toString())
+                    append("longitude", longitude.asDouble.toString())
+                }
+            }
+        }.body()
     }
 
     @Serializable

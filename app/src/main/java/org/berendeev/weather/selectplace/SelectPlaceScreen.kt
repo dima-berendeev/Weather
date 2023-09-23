@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
 
 package org.berendeev.weather.selectplace
 
@@ -66,7 +66,6 @@ fun SelectPlaceScreen(
                 modifier = Modifier
                     .padding(start = 8.dp, end = 8.dp)
                     .fillMaxWidth(),
-                label = { "Search" },
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Rounded.Clear,

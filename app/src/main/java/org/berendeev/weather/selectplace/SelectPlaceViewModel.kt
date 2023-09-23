@@ -1,17 +1,18 @@
-@file:OptIn(FlowPreview::class)
+@file:OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 
 package org.berendeev.weather.selectplace
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
@@ -29,7 +30,7 @@ class SelectPlaceViewModel @Inject constructor(private val placesRepository: Pla
             queryStateFlow.take(1),
             queryStateFlow.drop(1).debounce(2.seconds)
         )
-            .map { query ->
+            .mapLatest { query ->
                 SelectPlaceUiState(
                     query = query,
                     variants = placesRepository.fetchVariants(query)
