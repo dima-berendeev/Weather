@@ -5,8 +5,7 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.berendeev.weather.models.Latitude
-import org.berendeev.weather.models.Longitude
+import org.berendeev.weather.models.Coordinates
 import javax.inject.Inject
 
 class ForecastDatasource @Inject constructor(private val httpClient: HttpClient) {
@@ -14,7 +13,7 @@ class ForecastDatasource @Inject constructor(private val httpClient: HttpClient)
         ignoreUnknownKeys = true
     }
 
-    suspend fun fetchForecast(latitude: Latitude, longitude: Longitude): ApiModel {
+    suspend fun fetchForecast(coordinates: Coordinates): ApiModel {
         if (false) {
             return json.decodeFromString(mockJsonString)
         }
@@ -28,8 +27,8 @@ class ForecastDatasource @Inject constructor(private val httpClient: HttpClient)
         ) {
             url {
                 parameters.apply {
-                    append("latitude", latitude.asDouble.toString())
-                    append("longitude", longitude.asDouble.toString())
+                    append("latitude", coordinates.latitude.asDouble.toString())
+                    append("longitude", coordinates.longitude.asDouble.toString())
                 }
             }
         }.body()

@@ -7,13 +7,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import org.berendeev.weather.LocationProvider
 import org.berendeev.weather.datasources.ForecastDatasource
-import org.berendeev.weather.selectplace.Place
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class CurrentWeatherRepository @Inject constructor(private val forecastDatasource: ForecastDatasource) {
+class CurrentWeatherRepository @Inject constructor(
+    private val forecastDatasource: ForecastDatasource,
+    private val locationProvider: LocationProvider,
+) {
     private val weatherLocationState = MutableStateFlow<WeatherLocation>(WeatherLocation.Current)
 
     val state: Flow<State> = weatherLocationState.flatMapLatest { weatherLocation ->
@@ -23,35 +26,29 @@ class CurrentWeatherRepository @Inject constructor(private val forecastDatasourc
                 weatherInfo = null
             )
             emit(initialState)
-            when (weatherLocation) {
+            val coordinates = when (weatherLocation) {
                 WeatherLocation.Current -> {
-
+                    locationProvider.getCurrentLocation().coordinates
                 }
 
                 is WeatherLocation.Fixed -> {
-                    val apiModel = forecastDatasource.fetchForecast(
-                        weatherLocation.place.latitude,
-                        weatherLocation.place.longitude
-                    )
-                    emit(
-                        initialState.copy(
-                            weatherInfo = WeatherInfo(
-                                apiModel.current_weather.temperature
-                            )
-                        )
-                    )
+                    weatherLocation.coordinates
                 }
             }
+
+            val apiModel = forecastDatasource.fetchForecast(coordinates)
+            emit(
+                initialState.copy(
+                    weatherInfo = WeatherInfo(
+                        apiModel.current_weather.temperature
+                    )
+                )
+            )
         }
-
     }
 
-    fun usePlace(place: Place) {
-        weatherLocationState.value = WeatherLocation.Fixed(place)
-    }
-
-    fun useCurrentLocation() {
-        weatherLocationState.value = WeatherLocation.Current
+    fun setWeatherLocation(weatherLocation: WeatherLocation) {
+        weatherLocationState.value = weatherLocation
     }
 
     fun update() {

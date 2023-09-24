@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import org.berendeev.weather.currentweather.CurrentWeatherScreen
+import org.berendeev.weather.currentweather.WeatherLocation
 import org.berendeev.weather.selectplace.SelectPlaceScreen
 
 @Composable
@@ -28,12 +29,12 @@ fun MainScreen() {
             SelectPlaceScreen(
                 onPlaceSelected = { place ->
                     pop()
-                    mainViewModel.usePlace(place)
+                    mainViewModel.setWeatherLocation(WeatherLocation.Fixed(place.name, place.coordinates))
                 },
                 onClose = { pop() },
                 onCurrentLocationSelected = {
                     pop()
-                    mainViewModel.useCurrentLocation()
+                    mainViewModel.setWeatherLocation(WeatherLocation.Current)
                 },
                 viewModel = hiltViewModel()
             )

@@ -1,8 +1,8 @@
 package org.berendeev.weather.currentweather
 
-import org.berendeev.weather.selectplace.Place
+import org.berendeev.weather.models.Coordinates
 
 sealed interface WeatherLocation {
-    data class Fixed(val place: Place) : WeatherLocation
+    data class Fixed(val name: String, val coordinates: Coordinates) : WeatherLocation
     object Current : WeatherLocation
 }

@@ -16,8 +16,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
-import org.berendeev.weather.models.Latitude
-import org.berendeev.weather.models.Longitude
+import org.berendeev.weather.models.Coordinates
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
@@ -35,7 +34,7 @@ class SelectPlaceViewModel @Inject constructor(private val placesRepository: Pla
                     query = query,
                     variants = placesRepository.fetchVariants(query)
                         .map {
-                            SelectPlaceUiState.PlaceVariant(it.name, it.latitude, it.longitude)
+                            SelectPlaceUiState.PlaceVariant(it.name, it.coordinates)
                         }
                 )
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
@@ -43,5 +42,5 @@ class SelectPlaceViewModel @Inject constructor(private val placesRepository: Pla
 }
 
 data class SelectPlaceUiState(val query: String, val variants: List<PlaceVariant>) {
-    data class PlaceVariant(val name: String, val latitude: Latitude, val longitude: Longitude)
+    data class PlaceVariant(val name: String, val coordinates: Coordinates)
 }

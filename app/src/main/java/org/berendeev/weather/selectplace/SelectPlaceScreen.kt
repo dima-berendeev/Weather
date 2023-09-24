@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
 
 package org.berendeev.weather.selectplace
 
@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun SelectPlaceScreen(
-    onPlaceSelected: (Place) -> Unit,
+    onPlaceSelected: (SelectedPlace) -> Unit,
     onCurrentLocationSelected: () -> Unit,
     onClose: () -> Unit,
     viewModel: SelectPlaceViewModel,
@@ -77,14 +77,13 @@ fun SelectPlaceScreen(
                     onDone = { focusManager.clearFocus() })
             )
         }
-
         Places(
             variants,
             Modifier
                 .weight(1.0f)
                 .fillMaxWidth(),
             onPlaceClicked = { placeVariant ->
-                val place = Place(placeVariant.name, placeVariant.latitude, placeVariant.longitude)
+                val place = SelectedPlace(placeVariant.name, placeVariant.coordinates)
                 onPlaceSelected(place)
             },
             onCurrentLocationClicked = { onCurrentLocationSelected() }

@@ -5,8 +5,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.berendeev.weather.datasources.GeoCodingDataSource
-import org.berendeev.weather.models.Latitude
-import org.berendeev.weather.models.Longitude
+import org.berendeev.weather.models.Coordinates
 import javax.inject.Inject
 
 @ViewModelScoped
@@ -22,9 +21,12 @@ class PlacesRepository @Inject constructor(
         }
     }
 
-    private fun createPlaceVariant(it: GeoCodingDataSource.ApiModel.Result) =
-        PlaceVariant(name = it.name, latitude = Latitude(it.latitude), longitude = Longitude(it.longitude))
+    private fun createPlaceVariant(it: GeoCodingDataSource.ApiModel.Result): PlaceVariant {
+        return PlaceVariant(
+            name = it.name,
+            coordinates = Coordinates(it.latitude, it.longitude)
+        )
+    }
 
-
-    data class PlaceVariant(val name: String, val latitude: Latitude, val longitude: Longitude)
+    data class PlaceVariant(val name: String, val coordinates: Coordinates)
 }
