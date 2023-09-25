@@ -8,16 +8,17 @@ import androidx.navigation.compose.rememberNavController
 import org.berendeev.weather.currentweather.CurrentWeatherScreen
 import org.berendeev.weather.currentweather.WeatherLocation
 import org.berendeev.weather.selectplace.SelectPlaceScreen
+import org.berendeev.weather.selectplace.SelectedPlace
 
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
     val mainViewModel: MainViewModel = hiltViewModel()
-    NavHost(navController = navController, startDestination = "home-screen") {
+    NavHost(navController = navController, startDestination = "current-weather-screen") {
         fun pop() {
             navController.popBackStack()
         }
-        composable("home-screen") {
+        composable("current-weather-screen") {
             CurrentWeatherScreen(
                 onCurrentCityClick = {
                     navController.navigate("select-city-screen")
@@ -27,14 +28,17 @@ fun MainScreen() {
         }
         composable("select-city-screen") {
             SelectPlaceScreen(
-                onPlaceSelected = { place ->
+                onPlaceSelected = { place: SelectedPlace ->
+                    mainViewModel.setWeatherLocation(
+                        when (place) {
+                            SelectedPlace.CurrentLocation -> WeatherLocation.Current
+                            is SelectedPlace.FromSuggestions -> WeatherLocation.Fixed(place.name, place.coordinates)
+                        }
+                    )
                     pop()
-                    mainViewModel.setWeatherLocation(WeatherLocation.Fixed(place.name, place.coordinates))
                 },
-                onClose = { pop() },
-                onCurrentLocationSelected = {
+                onClose = {
                     pop()
-                    mainViewModel.setWeatherLocation(WeatherLocation.Current)
                 },
                 viewModel = hiltViewModel()
             )

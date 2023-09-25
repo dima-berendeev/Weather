@@ -23,6 +23,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -34,95 +35,116 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SelectPlaceScreen(
     onPlaceSelected: (SelectedPlace) -> Unit,
-    onCurrentLocationSelected: () -> Unit,
     onClose: () -> Unit,
     viewModel: SelectPlaceViewModel,
     modifier: Modifier = Modifier
 ) {
+    val selectedPlace = viewModel.selectedPlaceStateFlow.collectAsState().value
+    LaunchedEffect(key1 = selectedPlace) {
+        selectedPlace?.run { onPlaceSelected(selectedPlace) }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
     ) {
         val uiState by viewModel.uiStateFlow.collectAsState()
-        val variants: List<SelectPlaceUiState.PlaceVariant> = uiState?.variants ?: emptyList()
 
         val query = viewModel.queryStateFlow.collectAsState().value
 
-        Row {
-            IconButton(
-                modifier = Modifier.align(Alignment.CenterVertically),
-                onClick = { onClose() }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Localized description"
-                )
-            }
+        TopBar(
+            query = query,
+            onNavIconClicked = { onClose() }
+        )
 
-            val focusManager = LocalFocusManager.current
-            OutlinedTextField(
-                value = query,
-                onValueChange = { viewModel.queryStateFlow.value = it },
-                modifier = Modifier
-                    .padding(start = 8.dp, end = 8.dp)
+        val variants: List<SelectPlaceUiState.Place>? = uiState?.variants
+
+        if (variants != null) {
+            Places(
+                variants,
+                Modifier
+                    .weight(1.0f)
                     .fillMaxWidth(),
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Rounded.Clear,
-                        contentDescription = "Localized description"
-                    )
-                },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(
-                    onDone = { focusManager.clearFocus() })
             )
         }
-        Places(
-            variants,
-            Modifier
-                .weight(1.0f)
+    }
+}
+
+@Composable
+private fun TopBar(query: Query, onNavIconClicked: () -> Unit) {
+    Row {
+        IconButton(
+            modifier = Modifier.align(Alignment.CenterVertically),
+            onClick = { onNavIconClicked() }
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Localized description"
+            )
+        }
+
+        val focusManager = LocalFocusManager.current
+        OutlinedTextField(
+            value = query.text,
+            onValueChange = { query.onChanged(it) },
+            modifier = Modifier
+                .padding(start = 8.dp, end = 8.dp)
                 .fillMaxWidth(),
-            onPlaceClicked = { placeVariant ->
-                val place = SelectedPlace(placeVariant.name, placeVariant.coordinates)
-                onPlaceSelected(place)
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Rounded.Clear,
+                    contentDescription = "Localized description"
+                )
             },
-            onCurrentLocationClicked = { onCurrentLocationSelected() }
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(
+                onDone = { focusManager.clearFocus() })
         )
     }
 }
 
 @Composable
 private fun Places(
-    variants: List<SelectPlaceUiState.PlaceVariant>,
+    variants: List<SelectPlaceUiState.Place>,
     modifier: Modifier,
-    onPlaceClicked: (SelectPlaceUiState.PlaceVariant) -> Unit,
-    onCurrentLocationClicked: () -> Unit
 ) {
     LazyColumn(
         modifier = modifier
             .imePadding()
     ) {
-        item {
-            ListItem(
-                modifier = Modifier.clickable { onCurrentLocationClicked() },
-                headlineText = {
-                    Text(
-                        text = "Current location",
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            )
-        }
         items(variants) { variant ->
-            ListItem(
-                modifier = Modifier.clickable { onPlaceClicked(variant) },
-                headlineText = {
-                    Text(
-                        text = variant.name,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            )
+            when (variant) {
+                is SelectPlaceUiState.Place.CurrentLocation -> CurrentLocation(variant)
+                is SelectPlaceUiState.Place.FromSuggestions -> Suggestion(variant)
+            }
         }
     }
+}
+
+@Composable
+private fun CurrentLocation(variant: SelectPlaceUiState.Place.CurrentLocation) {
+    ListItem(
+        modifier = Modifier.clickable {
+            variant.onClick()
+        },
+        headlineText = {
+            Text(
+                text = "Current location",
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    )
+}
+
+@Composable
+private fun Suggestion(variant: SelectPlaceUiState.Place.FromSuggestions) {
+    ListItem(
+        modifier = Modifier.clickable { variant.onClick() },
+        headlineText = {
+            Text(
+                text = variant.name,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    )
 }

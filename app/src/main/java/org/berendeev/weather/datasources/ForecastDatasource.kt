@@ -14,7 +14,7 @@ class ForecastDatasource @Inject constructor(private val httpClient: HttpClient)
     }
 
     suspend fun fetchForecast(coordinates: Coordinates): ApiModel {
-        if (false) {
+        if (true) {
             return json.decodeFromString(mockJsonString)
         }
 

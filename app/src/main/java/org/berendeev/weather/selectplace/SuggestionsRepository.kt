@@ -9,24 +9,24 @@ import org.berendeev.weather.models.Coordinates
 import javax.inject.Inject
 
 @ViewModelScoped
-class PlacesRepository @Inject constructor(
+class SuggestionsRepository @Inject constructor(
     private val geoCodingDataSource: GeoCodingDataSource,
 
     ) {
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
-    suspend fun fetchVariants(query: String): List<PlaceVariant> {
+    suspend fun fetchVariants(query: String): List<Suggestion> {
         return withContext(ioDispatcher) {
             val apiModel = geoCodingDataSource.fetch(query)
             apiModel.results.map { createPlaceVariant(it) }
         }
     }
 
-    private fun createPlaceVariant(it: GeoCodingDataSource.ApiModel.Result): PlaceVariant {
-        return PlaceVariant(
+    private fun createPlaceVariant(it: GeoCodingDataSource.ApiModel.Result): Suggestion {
+        return Suggestion(
             name = it.name,
             coordinates = Coordinates(it.latitude, it.longitude)
         )
     }
 
-    data class PlaceVariant(val name: String, val coordinates: Coordinates)
+    data class Suggestion(val name: String, val coordinates: Coordinates)
 }
