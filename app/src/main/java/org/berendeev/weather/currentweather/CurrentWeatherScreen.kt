@@ -29,9 +29,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun CurrentWeatherScreen(viewModel: CurrentWeatherViewModel, onCurrentCityClick: () -> Unit) {
+fun CurrentWeatherRoute(
+    viewModel: CurrentWeatherViewModel = hiltViewModel(),
+    onCurrentCityClick: () -> Unit
+) {
     val uiState = viewModel.currentWeatherUiState.collectAsState().value
     CurrentWeatherScreen(uiState, onCurrentCityClick = onCurrentCityClick)
 }

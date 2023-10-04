@@ -5,9 +5,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import org.berendeev.weather.currentweather.CurrentWeatherScreen
+import org.berendeev.weather.currentweather.CurrentWeatherRoute
 import org.berendeev.weather.currentweather.WeatherLocation
-import org.berendeev.weather.selectplace.SelectPlaceScreen
+import org.berendeev.weather.selectplace.SelectPlaceRoute
 import org.berendeev.weather.selectplace.SelectedPlace
 
 @Composable
@@ -19,15 +19,14 @@ fun MainScreen() {
             navController.popBackStack()
         }
         composable("current-weather-screen") {
-            CurrentWeatherScreen(
+            CurrentWeatherRoute(
                 onCurrentCityClick = {
                     navController.navigate("select-city-screen")
-                },
-                viewModel = hiltViewModel()
+                }
             )
         }
         composable("select-city-screen") {
-            SelectPlaceScreen(
+            SelectPlaceRoute(
                 onPlaceSelected = { place: SelectedPlace ->
                     mainViewModel.setWeatherLocation(
                         when (place) {
@@ -39,8 +38,7 @@ fun MainScreen() {
                 },
                 onClose = {
                     pop()
-                },
-                viewModel = hiltViewModel()
+                }
             )
         }
     }
