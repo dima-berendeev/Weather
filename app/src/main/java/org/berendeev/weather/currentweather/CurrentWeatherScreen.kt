@@ -82,6 +82,7 @@ fun CurrentWeatherScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchBar(name: String?, onCurrentCityClick: () -> Unit, modifier: Modifier) {
     TopAppBar(
