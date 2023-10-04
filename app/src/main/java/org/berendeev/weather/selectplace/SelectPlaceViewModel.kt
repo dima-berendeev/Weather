@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
+import org.berendeev.weather.data.SuggestionsRepository
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 

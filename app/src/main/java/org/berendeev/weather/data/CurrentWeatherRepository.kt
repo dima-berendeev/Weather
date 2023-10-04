@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
-package org.berendeev.weather.currentweather
+package org.berendeev.weather.data
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import org.berendeev.weather.LocationProvider
+import org.berendeev.weather.currentweather.WeatherLocation
 import org.berendeev.weather.network.ForecastDatasource
 import javax.inject.Inject
 import javax.inject.Singleton

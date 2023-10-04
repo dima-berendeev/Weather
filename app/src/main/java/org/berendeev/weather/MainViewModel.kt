@@ -2,7 +2,7 @@ package org.berendeev.weather
 
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import org.berendeev.weather.currentweather.CurrentWeatherRepository
+import org.berendeev.weather.data.CurrentWeatherRepository
 import org.berendeev.weather.currentweather.WeatherLocation
 import javax.inject.Inject
 

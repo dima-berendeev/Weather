@@ -1,4 +1,4 @@
-package org.berendeev.weather.selectplace
+package org.berendeev.weather.data
 
 import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.CoroutineDispatcher
