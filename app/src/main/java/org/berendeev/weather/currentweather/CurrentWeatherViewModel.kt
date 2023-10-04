@@ -7,12 +7,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import org.berendeev.weather.data.CurrentWeatherRepository
+import org.berendeev.weather.data.ForecastRepository
 import javax.inject.Inject
 
 @HiltViewModel
 class CurrentWeatherViewModel @Inject constructor(
-    currentWeatherRepository: CurrentWeatherRepository
+    currentWeatherRepository: ForecastRepository
 ) : ViewModel() {
 
     val currentWeatherUiState: StateFlow<CurrentWeatherUiState> = currentWeatherRepository.state.map {

@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import org.berendeev.weather.models.WeatherLocation
 
 @Composable
 fun CurrentWeatherRoute(

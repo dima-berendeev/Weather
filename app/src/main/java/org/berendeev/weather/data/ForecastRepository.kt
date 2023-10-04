@@ -8,13 +8,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import org.berendeev.weather.LocationProvider
-import org.berendeev.weather.currentweather.WeatherLocation
+import org.berendeev.weather.models.WeatherLocation
 import org.berendeev.weather.network.ForecastDatasource
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class CurrentWeatherRepository @Inject constructor(
+class ForecastRepository @Inject constructor(
     private val forecastDatasource: ForecastDatasource,
     private val locationProvider: LocationProvider,
 ) {

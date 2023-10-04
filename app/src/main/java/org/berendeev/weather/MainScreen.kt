@@ -6,7 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import org.berendeev.weather.currentweather.CurrentWeatherRoute
-import org.berendeev.weather.currentweather.WeatherLocation
+import org.berendeev.weather.models.WeatherLocation
 import org.berendeev.weather.selectplace.SelectPlaceRoute
 import org.berendeev.weather.selectplace.SelectedPlace
 
