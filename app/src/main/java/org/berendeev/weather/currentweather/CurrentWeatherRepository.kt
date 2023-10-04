@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import org.berendeev.weather.LocationProvider
-import org.berendeev.weather.datasources.ForecastDatasource
+import org.berendeev.weather.network.ForecastDatasource
 import javax.inject.Inject
 import javax.inject.Singleton
 

@@ -4,7 +4,7 @@ import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.berendeev.weather.datasources.GeoCodingDataSource
+import org.berendeev.weather.network.GeoCodingDataSource
 import org.berendeev.weather.models.Coordinates
 import javax.inject.Inject
 

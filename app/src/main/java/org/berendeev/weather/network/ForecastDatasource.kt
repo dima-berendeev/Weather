@@ -1,4 +1,4 @@
-package org.berendeev.weather.datasources
+package org.berendeev.weather.network
 
 import io.ktor.client.*
 import io.ktor.client.call.*
