@@ -14,12 +14,7 @@ class CurrentWeatherViewModel @Inject constructor(
     currentWeatherRepository: CurrentWeatherRepository
 ) : ViewModel() {
 
-    val currentWeatherUiState: StateFlow<CurrentWeatherUiState?> = currentWeatherRepository.state.map {
+    val currentWeatherUiState: StateFlow<CurrentWeatherUiState> = currentWeatherRepository.state.map {
         CurrentWeatherUiState(weatherLocation = it.weatherLocation, temperature = it.weatherInfo?.temperature)
-    }.stateIn(viewModelScope, SharingStarted.Lazily, null)
-
-}
-
-data class CurrentWeatherUiState(val weatherLocation: WeatherLocation, val temperature: Float?){
-
+    }.stateIn(viewModelScope, SharingStarted.Lazily, CurrentWeatherUiState())
 }

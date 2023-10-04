@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
-import org.berendeev.weather.models.Coordinates
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
@@ -44,11 +43,11 @@ class SelectPlaceViewModel @Inject constructor(private val placesRepository: Sug
                     query = query,
                     variants = createVariants(placesRepository.fetchVariants(query))
                 )
-            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    private fun createVariants(repoSuggestions: List<SuggestionsRepository.Suggestion>): List<SelectPlaceUiState.Place> {
+    private fun createVariants(repoSuggestions: List<SuggestionsRepository.Suggestion>): List<PlaceVariantUiState> {
         val suggestionsUiState = repoSuggestions.map {
-            SelectPlaceUiState.Place.FromSuggestions(
+            PlaceVariantUiState.Geo(
                 it.name,
                 it.coordinates
             ) {
@@ -57,7 +56,7 @@ class SelectPlaceViewModel @Inject constructor(private val placesRepository: Sug
         }
         return buildList {
             add(
-                SelectPlaceUiState.Place.CurrentLocation {
+                PlaceVariantUiState.CurrentLocation {
                     selectedPlaceStateFlow.value = SelectedPlace.CurrentLocation
                 }
             )
@@ -68,9 +67,3 @@ class SelectPlaceViewModel @Inject constructor(private val placesRepository: Sug
 
 data class Query(val text: String, val onChanged: (String) -> Unit)
 
-data class SelectPlaceUiState(val query: String, val variants: List<Place>, val selectedPlace: SelectedPlace? = null) {
-    sealed interface Place {
-        data class FromSuggestions(val name: String, val coordinates: Coordinates, val onClick: () -> Unit) : Place
-        data class CurrentLocation(val onClick: () -> Unit) : Place
-    }
-}

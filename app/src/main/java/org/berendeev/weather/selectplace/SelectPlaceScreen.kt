@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun SelectPlaceScreen(
@@ -39,25 +40,33 @@ fun SelectPlaceScreen(
     viewModel: SelectPlaceViewModel,
     modifier: Modifier = Modifier
 ) {
-    val selectedPlace = viewModel.selectedPlaceStateFlow.collectAsState().value
+    val selectedPlace = viewModel.selectedPlaceStateFlow.collectAsStateWithLifecycle().value
     LaunchedEffect(key1 = selectedPlace) {
         selectedPlace?.run { onPlaceSelected(selectedPlace) }
     }
 
+    val uiState by viewModel.uiStateFlow.collectAsStateWithLifecycle()
+    val query = viewModel.queryStateFlow.collectAsStateWithLifecycle().value
+    SelectPlaceScreen(uiState, query, onClose, modifier)
+}
+
+@Composable
+fun SelectPlaceScreen(
+    uiState: SelectPlaceUiState?,
+    query: Query,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
     ) {
-        val uiState by viewModel.uiStateFlow.collectAsState()
-
-        val query = viewModel.queryStateFlow.collectAsState().value
-
         TopBar(
             query = query,
             onNavIconClicked = { onClose() }
         )
 
-        val variants: List<SelectPlaceUiState.Place>? = uiState?.variants
+        val variants: List<PlaceVariantUiState>? = uiState?.variants
 
         if (variants != null) {
             Places(
@@ -105,7 +114,7 @@ private fun TopBar(query: Query, onNavIconClicked: () -> Unit) {
 
 @Composable
 private fun Places(
-    variants: List<SelectPlaceUiState.Place>,
+    variants: List<PlaceVariantUiState>,
     modifier: Modifier,
 ) {
     LazyColumn(
@@ -114,20 +123,20 @@ private fun Places(
     ) {
         items(variants) { variant ->
             when (variant) {
-                is SelectPlaceUiState.Place.CurrentLocation -> CurrentLocation(variant)
-                is SelectPlaceUiState.Place.FromSuggestions -> Suggestion(variant)
+                is PlaceVariantUiState.CurrentLocation -> CurrentLocation(variant)
+                is PlaceVariantUiState.Geo -> Suggestion(variant)
             }
         }
     }
 }
 
 @Composable
-private fun CurrentLocation(variant: SelectPlaceUiState.Place.CurrentLocation) {
+private fun CurrentLocation(variant: PlaceVariantUiState.CurrentLocation) {
     ListItem(
         modifier = Modifier.clickable {
             variant.onClick()
         },
-        headlineText = {
+        headlineContent = {
             Text(
                 text = "Current location",
                 modifier = Modifier.fillMaxWidth(),
@@ -137,10 +146,10 @@ private fun CurrentLocation(variant: SelectPlaceUiState.Place.CurrentLocation) {
 }
 
 @Composable
-private fun Suggestion(variant: SelectPlaceUiState.Place.FromSuggestions) {
+private fun Suggestion(variant: PlaceVariantUiState.Geo) {
     ListItem(
         modifier = Modifier.clickable { variant.onClick() },
-        headlineText = {
+        headlineContent = {
             Text(
                 text = variant.name,
                 modifier = Modifier.fillMaxWidth(),
