@@ -9,6 +9,6 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(private val currentWeatherRepository: ForecastRepository) : ViewModel() {
     fun setWeatherLocation(weatherLocation: WeatherLocation) {
-        currentWeatherRepository.setWeatherLocation(weatherLocation)
+//        currentWeatherRepository.setWeatherLocation(weatherLocation)
     }
 }
