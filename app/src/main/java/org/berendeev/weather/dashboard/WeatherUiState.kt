@@ -1,4 +1,4 @@
-package org.berendeev.weather.currentweather
+package org.berendeev.weather.dashboard
 
 import org.berendeev.weather.data.model.ForecastData
 import org.berendeev.weather.data.model.LocationMode

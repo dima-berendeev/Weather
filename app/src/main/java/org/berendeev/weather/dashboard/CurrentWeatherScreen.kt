@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package org.berendeev.weather.currentweather
+package org.berendeev.weather.dashboard
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

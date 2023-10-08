@@ -1,4 +1,4 @@
-package org.berendeev.weather.currentweather
+package org.berendeev.weather.dashboard
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
