@@ -8,6 +8,9 @@ import kotlinx.serialization.json.Json
 import org.berendeev.weather.models.Coordinates
 import javax.inject.Inject
 
+/**
+ * https://open-meteo.com/en/docs
+ */
 class ForecastDatasource @Inject constructor(private val httpClient: HttpClient) {
     private val json = Json {
         ignoreUnknownKeys = true
