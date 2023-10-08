@@ -29,17 +29,17 @@ import org.berendeev.weather.data.model.ForecastData
 import org.berendeev.weather.data.model.LocationMode
 
 @Composable
-fun CurrentWeatherRoute(
-    viewModel: WeatherInfoViewModel = hiltViewModel(),
+fun DashboardRoute(
+    viewModel: DashboardViewModel = hiltViewModel(),
     onCurrentCityClick: () -> Unit
 ) {
     val uiState = viewModel.currentWeatherUiState.collectAsState().value
-    CurrentWeatherScreen(uiState, onCurrentCityClick = onCurrentCityClick)
+    DashboardScreen(uiState, onCurrentCityClick = onCurrentCityClick)
 }
 
 @Composable
-fun CurrentWeatherScreen(
-    uiState: WeatherUiState,
+fun DashboardScreen(
+    uiState: DashboardUiState,
     onCurrentCityClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -69,7 +69,7 @@ fun CurrentWeatherScreen(
 }
 
 @Composable
-fun Forecast(uiState: ForecastUiState, modifier: Modifier = Modifier) {
+private fun Forecast(uiState: ForecastUiState, modifier: Modifier = Modifier) {
     when (uiState) {
         ForecastUiState.Loading -> {
             CircularProgressIndicator(modifier.wrapContentSize(Alignment.Center))
@@ -85,7 +85,7 @@ fun Forecast(uiState: ForecastUiState, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun Forecast(forecastData: ForecastData, update: () -> Unit, modifier: Modifier = Modifier) {
+private fun Forecast(forecastData: ForecastData, update: () -> Unit, modifier: Modifier = Modifier) {
     Text(
         text = forecastData.temperature.toString(),
         style = MaterialTheme.typography.displayLarge,
@@ -97,7 +97,7 @@ fun Forecast(forecastData: ForecastData, update: () -> Unit, modifier: Modifier 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchBar(locationMode: LocationMode, onCurrentCityClick: () -> Unit, modifier: Modifier) {
+private fun SearchBar(locationMode: LocationMode, onCurrentCityClick: () -> Unit, modifier: Modifier) {
 
     val locationName = when (locationMode) {
         LocationMode.Current -> "Current"

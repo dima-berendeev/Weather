@@ -3,7 +3,7 @@ package org.berendeev.weather.dashboard
 import org.berendeev.weather.data.model.ForecastData
 import org.berendeev.weather.data.model.LocationMode
 
-data class WeatherUiState(
+data class DashboardUiState(
     val locationMode: LocationMode? = null,
     val forecastUiState: ForecastUiState = ForecastUiState.Loading,
     val requireLocationPermission: Boolean = false,

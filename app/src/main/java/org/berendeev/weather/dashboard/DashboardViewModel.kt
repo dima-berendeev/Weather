@@ -24,28 +24,28 @@ import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
-class WeatherInfoViewModel @Inject constructor(
+class DashboardViewModel @Inject constructor(
     private val modeRepository: LocationModeRepository,
     private val forecastRepository: ForecastRepository,
 //    private val locationRepository: CurrentLocationRepository,
 
 ) : ViewModel() {
 
-    val currentWeatherUiState: StateFlow<WeatherUiState> = modeRepository.state.flatMapLatest { mode ->
+    val currentWeatherUiState: StateFlow<DashboardUiState> = modeRepository.state.flatMapLatest { mode ->
         flow {
-            emit(WeatherUiState(locationMode = mode))
+            emit(DashboardUiState(locationMode = mode))
             when (mode) {
                 LocationMode.Current -> TODO()
                 is LocationMode.Fixed -> {
                     emitAll(
                         getWeatherDetailsUiStateForLocation(mode.coordinates)
-                            .map { WeatherUiState(mode, it) }
+                            .map { DashboardUiState(mode, it) }
                     )
                 }
             }
 
         }
-    }.stateIn(viewModelScope, started = SharingStarted.WhileSubscribed(5_000), WeatherUiState())
+    }.stateIn(viewModelScope, started = SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 
     private fun getWeatherDetailsUiStateForLocation(coordinates: Coordinates): Flow<ForecastUiState> {
         val forceUpdateFlow = Channel<Boolean>() {
