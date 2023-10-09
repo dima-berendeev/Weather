@@ -70,22 +70,23 @@ fun DashboardScreen(
 
 @Composable
 private fun Forecast(uiState: ForecastUiState, modifier: Modifier = Modifier) {
-    when (uiState) {
-        ForecastUiState.Loading -> {
+    when {
+        uiState.isUpdating -> {
             CircularProgressIndicator(modifier.wrapContentSize(Alignment.Center))
         }
 
-        is ForecastUiState.Error -> {
-            Text("Error")
+        uiState.updateFailed && !uiState.isUpdating -> {
+            Text("Error", modifier = modifier)
         }
 
-        is ForecastUiState.Stale -> Forecast(uiState.forecastData, uiState.update, modifier)
-        is ForecastUiState.Success -> Forecast(uiState.forecastData, uiState.update, modifier)
+        uiState.forecastData != null -> {
+            Forecast(uiState.forecastData, uiState.update, modifier)
+        }
     }
 }
 
 @Composable
-private fun Forecast(forecastData: ForecastData, update: () -> Unit, modifier: Modifier = Modifier) {
+private fun Forecast(forecastData: ForecastData, update: (() -> Unit)?, modifier: Modifier = Modifier) {
     Text(
         text = forecastData.temperature.toString(),
         style = MaterialTheme.typography.displayLarge,

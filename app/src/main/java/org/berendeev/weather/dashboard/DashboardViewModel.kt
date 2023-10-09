@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
@@ -28,7 +29,6 @@ class DashboardViewModel @Inject constructor(
     private val modeRepository: LocationModeRepository,
     private val forecastRepository: ForecastRepository,
 //    private val locationRepository: CurrentLocationRepository,
-
 ) : ViewModel() {
 
     val currentWeatherUiState: StateFlow<DashboardUiState> = modeRepository.state.flatMapLatest { mode ->
@@ -55,21 +55,24 @@ class DashboardViewModel @Inject constructor(
         return forceUpdateFlow.consumeAsFlow()
             .onStart { emit(false) }
             .flatMapLatest { forceUpdate ->
-                forecastRepository.observe(coordinates, forceUpdate)
+                combine(
+                    flow {
+                        if (forceUpdate) {
+                            emit(true)
+                            forecastRepository.refresh()
+                        }
+                        emit(false)
+                    },
+                    forecastRepository.observe(coordinates)
+                ) { isRefreshing, forecastState ->
+                    ForecastUiState(
+                        forecastData = forecastState.forecast,
+                        isUpdating = isRefreshing || forecastState.isInitialising,
+                        updateFailed = forecastState.loadingFailed,
+                        update = update
+                    )
+                }
             }
-            .mapForecastStateToUi(update)
-    }
 
-    private fun Flow<ForecastRepository.State>.mapForecastStateToUi(update: () -> Unit): Flow<ForecastUiState> {
-        return map { repoState: ForecastRepository.State ->
-            when (repoState) {
-                is ForecastRepository.State.Empty -> ForecastUiState.Loading
-                is ForecastRepository.State.Success -> ForecastUiState.Success(repoState.forecast, update)
-                is ForecastRepository.State.Error -> ForecastUiState.Error(repoState.error, update)
-                is ForecastRepository.State.Stale -> ForecastUiState.Stale(repoState.forecast, repoState.error, update)
-            }
-        }
     }
 }
-
-

@@ -73,32 +73,39 @@ interface ForecastRepository {
      *
      * @return cashed according the rules
      */
-    fun observe(coordinates: Coordinates, forceUpdate: Boolean = false): Flow<State>
+    fun observe(coordinates: Coordinates): Flow<State>
 
-    sealed interface State {
-        object Empty : State
-        data class Error(val error: Throwable) : State
-        data class Success(val forecast: ForecastData) : State
-        data class Stale(val forecast: ForecastData, val error: Throwable? = null) : State
+    suspend fun refresh()
+
+    data class State(
+        val forecast: ForecastData?,
+        val loadingFailed: Boolean,
+    ) {
+        val isInitialising get() = forecast == null && !loadingFailed
+        val isStale get() = loadingFailed
     }
 }
 
-
-class FakeForecastRepository @Inject constructor(): ForecastRepository {
-    override fun observe(coordinates: Coordinates, forceUpdate: Boolean): Flow<ForecastRepository.State> {
+class FakeForecastRepository @Inject constructor() : ForecastRepository {
+    override fun observe(coordinates: Coordinates): Flow<ForecastRepository.State> {
         return flow {
-            emit(ForecastRepository.State.Empty)
+            emit(ForecastRepository.State(null, false))
             delay(4.seconds)
-            emit(ForecastRepository.State.Success(forecast = ForecastData(10.0f)))
+            emit(ForecastRepository.State(forecast = ForecastData(10.0f), false))
             delay(4.seconds)
-            emit(ForecastRepository.State.Stale(forecast = ForecastData(10.0f)))
+            emit(ForecastRepository.State(forecast = ForecastData(10.0f), true))
             delay(4.seconds)
         }
+    }
+
+    override suspend fun refresh() {
+        TODO("Not yet implemented")
     }
 }
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class ForecastRepositoryRepoModule{
-    @Binds abstract fun binds(impl:FakeForecastRepository):ForecastRepository
+abstract class ForecastRepositoryRepoModule {
+    @Binds
+    abstract fun binds(impl: FakeForecastRepository): ForecastRepository
 }
