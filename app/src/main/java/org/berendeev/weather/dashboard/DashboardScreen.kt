@@ -1,23 +1,18 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package org.berendeev.weather.dashboard
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -43,11 +38,12 @@ fun DashboardScreen(
     onCurrentCityClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    Box(modifier = modifier.fillMaxWidth()) {
 
-    Column(modifier = modifier.fillMaxSize()) {
-        val locationMode = uiState.locationMode ?: return // show empty
+        Column {
+            val locationMode = uiState.locationMode ?: return // show empty
 
-        SearchBar(locationMode, onCurrentCityClick, Modifier.fillMaxWidth())
+            SearchBar(locationMode, onCurrentCityClick, Modifier.fillMaxWidth())
 //        val permissionResultLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission()) { it: Boolean ->
 //            it
 //        }
@@ -59,12 +55,13 @@ fun DashboardScreen(
 //            Text(text = "Give location permission")
 //        }
 
-        Forecast(
-            uiState.forecastUiState,
-            Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        )
+            Forecast(
+                uiState.forecastUiState,
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
+        }
     }
 }
 
@@ -89,42 +86,34 @@ private fun Forecast(uiState: ForecastUiState, modifier: Modifier = Modifier) {
 private fun Forecast(forecastData: ForecastData, update: (() -> Unit)?, modifier: Modifier = Modifier) {
     Text(
         text = forecastData.temperature.toString(),
-        style = MaterialTheme.typography.displayLarge,
+        style = MaterialTheme.typography.h3,
         textAlign = TextAlign.Center,
         modifier = modifier
             .wrapContentSize(Alignment.Center)
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SearchBar(locationMode: LocationMode, onCurrentCityClick: () -> Unit, modifier: Modifier) {
-
     val locationName = when (locationMode) {
         LocationMode.Current -> "Current"
         is LocationMode.Fixed -> locationMode.name
     }
 
-    TopAppBar(
-        title = {
-            Box(
-                modifier
-                    .fillMaxWidth()
-                    .padding(start = 24.dp, end = 24.dp)
-                    .heightIn(min = 56.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(CornerSize(50)))
-                    .clickable {
-                        onCurrentCityClick()
-                    }) {
-                Text(
-                    modifier = Modifier.align(Alignment.Center),
-                    text = locationName,
-                    style = MaterialTheme.typography.headlineLarge,
-
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
+    Text(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = 24.dp, end = 24.dp)
+            .heightIn(min = 56.dp)
+            .background(MaterialTheme.colors.secondary, RoundedCornerShape(CornerSize(50)))
+            .clickable {
+                onCurrentCityClick()
             }
-        }
+            .wrapContentSize(Alignment.Center),
+        text = locationName,
+        style = MaterialTheme.typography.h4,
+
+        textAlign = TextAlign.Center,
+        color = MaterialTheme.colors.onSecondary
     )
 }
