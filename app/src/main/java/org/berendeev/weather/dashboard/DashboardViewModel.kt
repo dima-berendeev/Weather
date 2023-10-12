@@ -69,7 +69,7 @@ class DashboardViewModel @Inject constructor(
             refreshingFlow,
             forecastRepository.state
         ) { refreshing, forecastState ->
-            when(forecastState){
+            when (forecastState) {
                 is ForecastRepository.State.Success -> {
                     ForecastUiState.Success(
                         forecastData = forecastState.forecast,
@@ -78,7 +78,11 @@ class DashboardViewModel @Inject constructor(
                         refreshing = refreshing
                     )
                 }
-                ForecastRepository.State.Error -> TODO()
+
+                ForecastRepository.State.Error -> {
+                    ForecastUiState.Error(refreshing, refresh)
+                }
+
                 null -> null
             }
         }

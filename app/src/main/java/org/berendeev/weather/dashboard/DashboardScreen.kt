@@ -117,7 +117,14 @@ private fun Forecast(forecastUiState: ForecastUiState?, modifier: Modifier = Mod
                 )
             }
 
-            is ForecastUiState.Error -> TODO()
+            is ForecastUiState.Error -> {
+                Text(
+                    "Error",
+                    modifier = modifier
+                        .wrapContentSize(Alignment.Center)
+                )
+            }
+
             null -> ForecastInitialisation(modifier.wrapContentSize(Alignment.Center))
         }
     }
@@ -183,6 +190,18 @@ private fun ForecastInitializingPreview() {
         uiState = DashboardUiState(
             LocationMode.Current,
             null
+        ),
+        onCurrentCityClick = { /*TODO*/ }
+    )
+}
+
+@Preview(device = Devices.NEXUS_6)
+@Composable
+private fun ForecastErrorPreview() {
+    DashboardScreen(
+        uiState = DashboardUiState(
+            LocationMode.Current,
+            ForecastUiState.Error(false, {})
         ),
         onCurrentCityClick = { /*TODO*/ }
     )
