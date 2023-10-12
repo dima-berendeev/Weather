@@ -4,23 +4,23 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.berendeev.weather.data.model.LocationMode
-import org.berendeev.weather.models.Coordinates
 import javax.inject.Inject
+import javax.inject.Singleton
 
 interface LocationModeRepository {
-    val state: Flow<LocationMode>
+    val state: StateFlow<LocationMode?>
 
     fun setMode(mode: LocationMode)
 }
 
 class FakeLocationModeRepository @Inject constructor() : LocationModeRepository {
-    override val state: Flow<LocationMode> = flowOf(LocationMode.Fixed("Amsterdam", Coordinates(1.0, 1.0)))
+    override val state: MutableStateFlow<LocationMode?> = MutableStateFlow(null)
 
     override fun setMode(mode: LocationMode) {
-        TODO("Not yet implemented")
+        state.value = mode
     }
 }
 
@@ -28,5 +28,6 @@ class FakeLocationModeRepository @Inject constructor() : LocationModeRepository 
 @InstallIn(SingletonComponent::class)
 abstract class FakeLocationModeRepositoryModule {
     @Binds
+    @Singleton
     abstract fun binds(impl: FakeLocationModeRepository): LocationModeRepository
 }

@@ -6,7 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import org.berendeev.weather.dashboard.DashboardRoute
-import org.berendeev.weather.models.WeatherLocation
+import org.berendeev.weather.data.model.LocationMode
 import org.berendeev.weather.selectplace.SelectPlaceRoute
 import org.berendeev.weather.selectplace.SelectedPlace
 
@@ -28,10 +28,10 @@ fun MainScreen() {
         composable("select-city-screen") {
             SelectPlaceRoute(
                 onPlaceSelected = { place: SelectedPlace ->
-                    mainViewModel.setWeatherLocation(
+                    mainViewModel.locationMode(
                         when (place) {
-                            SelectedPlace.CurrentLocation -> WeatherLocation.Current
-                            is SelectedPlace.FromSuggestions -> WeatherLocation.Fixed(place.name, place.coordinates)
+                            SelectedPlace.CurrentLocation -> LocationMode.Current
+                            is SelectedPlace.FromSuggestions -> LocationMode.Fixed(place.name, place.coordinates)
                         }
                     )
                     pop()

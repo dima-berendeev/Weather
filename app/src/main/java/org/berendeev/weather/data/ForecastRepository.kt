@@ -133,14 +133,19 @@ class FakeForecastRepository @Inject constructor(@ApplicationCoroutineScope priv
     }
 
     override suspend fun setCoordinates(coordinates: Coordinates) {
-        TODO("Not yet implemented")
+        state.value = null
+        loadNewValues()
     }
 
     override suspend fun refresh() {
+        loadNewValues()
+    }
+
+    private suspend fun loadNewValues() {
         withContext(Dispatchers.Default) {
             mutex.withLock {
-                updateTemperature()
                 delay(2.seconds)
+                updateTemperature()
                 state.value = ForecastRepository.State.Success(ForecastData(temperature.toFloat()), false)
             }
         }

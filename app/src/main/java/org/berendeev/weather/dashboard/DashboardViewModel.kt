@@ -31,22 +31,25 @@ class DashboardViewModel @Inject constructor(
 //    private val locationRepository: CurrentLocationRepository,
 ) : ViewModel() {
 
-    val currentWeatherUiState: StateFlow<DashboardUiState> = modeRepository.state.flatMapLatest { mode ->
-        flow {
-            emit(DashboardUiState(locationMode = mode))
-            when (mode) {
-                LocationMode.Current -> TODO()
-                is LocationMode.Fixed -> {
-                    emitAll(
-                        forecastUiStateFlow().map {
-                            DashboardUiState(locationMode = mode, forecastUiState = it)
-                        }
-                    )
+    val currentWeatherUiState: StateFlow<DashboardUiState> = modeRepository.state
+        .flatMapLatest { mode ->
+            flow {
+                emit(DashboardUiState(locationMode = mode))
+                when (mode) {
+                    LocationMode.Current -> TODO()
+                    is LocationMode.Fixed -> {
+                        forecastRepository.setCoordinates(mode.coordinates)
+                        emitAll(
+                            forecastUiStateFlow().map {
+                                DashboardUiState(locationMode = mode, forecastUiState = it)
+                            }
+                        )
+                    }
+
+                    null -> {}
                 }
             }
-
-        }
-    }.stateIn(viewModelScope, started = SharingStarted.WhileSubscribed(5_000), DashboardUiState())
+        }.stateIn(viewModelScope, started = SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 
     private fun forecastUiStateFlow(): Flow<ForecastUiState?> {
         val refreshFlow = Channel<Unit>(capacity = 1) {

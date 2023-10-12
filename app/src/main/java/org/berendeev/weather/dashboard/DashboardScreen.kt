@@ -56,7 +56,7 @@ fun DashboardScreen(
 
     ) {
         Column(Modifier.fillMaxSize()) {
-            val locationMode = uiState.locationMode ?: return // show empty
+            val locationMode = uiState.locationMode // show empty
 
             SearchBar(locationMode, onCurrentCityClick, Modifier.fillMaxWidth())
 //        val permissionResultLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission()) { it: Boolean ->
@@ -69,21 +69,23 @@ fun DashboardScreen(
 //        }) {
 //            Text(text = "Give location permission")
 //        }
-
-            Forecast(
-                uiState.forecastUiState,
-                Modifier.fillMaxSize()
-            )
+            if (locationMode != null) {
+                Forecast(
+                    uiState.forecastUiState,
+                    Modifier.fillMaxSize()
+                )
+            }
         }
     }
 }
 
 
 @Composable
-private fun SearchBar(locationMode: LocationMode, onCurrentCityClick: () -> Unit, modifier: Modifier) {
+private fun SearchBar(locationMode: LocationMode?, onCurrentCityClick: () -> Unit, modifier: Modifier) {
     val locationName = when (locationMode) {
         LocationMode.Current -> "Current"
         is LocationMode.Fixed -> locationMode.name
+        else -> "No selected"
     }
 
     Text(
