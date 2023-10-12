@@ -1,23 +1,34 @@
+@file:OptIn(ExperimentalMaterialApi::class)
+
 package org.berendeev.weather.dashboard
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.berendeev.weather.data.model.ForecastData
@@ -32,15 +43,31 @@ fun DashboardRoute(
     DashboardScreen(uiState, onCurrentCityClick = onCurrentCityClick)
 }
 
+@Preview(device = Devices.NEXUS_6)
+@Composable
+fun DashboardScreenPreview() {
+    DashboardScreen(
+        uiState = DashboardUiState(
+            LocationMode.Current,
+            ForecastUiState(forecastData = ForecastData(10f))
+        ),
+        onCurrentCityClick = { /*TODO*/ }
+    )
+}
+
 @Composable
 fun DashboardScreen(
     uiState: DashboardUiState,
     onCurrentCityClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.fillMaxWidth()) {
 
-        Column {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+
+    ) {
+        Column(Modifier.fillMaxSize()) {
             val locationMode = uiState.locationMode ?: return // show empty
 
             SearchBar(locationMode, onCurrentCityClick, Modifier.fillMaxWidth())
@@ -57,41 +84,12 @@ fun DashboardScreen(
 
             Forecast(
                 uiState.forecastUiState,
-                Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
+                Modifier.fillMaxSize()
             )
         }
     }
 }
 
-@Composable
-private fun Forecast(uiState: ForecastUiState, modifier: Modifier = Modifier) {
-    when {
-        uiState.isUpdating -> {
-            CircularProgressIndicator(modifier.wrapContentSize(Alignment.Center))
-        }
-
-        uiState.updateFailed && !uiState.isUpdating -> {
-            Text("Error", modifier = modifier)
-        }
-
-        uiState.forecastData != null -> {
-            Forecast(uiState.forecastData, uiState.update, modifier)
-        }
-    }
-}
-
-@Composable
-private fun Forecast(forecastData: ForecastData, update: (() -> Unit)?, modifier: Modifier = Modifier) {
-    Text(
-        text = forecastData.temperature.toString(),
-        style = MaterialTheme.typography.h3,
-        textAlign = TextAlign.Center,
-        modifier = modifier
-            .wrapContentSize(Alignment.Center)
-    )
-}
 
 @Composable
 private fun SearchBar(locationMode: LocationMode, onCurrentCityClick: () -> Unit, modifier: Modifier) {
@@ -116,4 +114,67 @@ private fun SearchBar(locationMode: LocationMode, onCurrentCityClick: () -> Unit
         textAlign = TextAlign.Center,
         color = MaterialTheme.colors.onSecondary
     )
+}
+
+@Composable
+private fun Forecast(forecastUiState: ForecastUiState, modifier: Modifier = Modifier) {
+    Box(modifier.fillMaxSize()) {
+        when {
+            forecastUiState.forecastData != null -> {
+                ForecastInformation(
+                    forecastUiState.forecastData,
+                    forecastUiState.refreshing,
+                    forecastUiState.refresh ?: {},
+                    modifier
+                )
+            }
+
+            !forecastUiState.lastLoadFailed -> {
+                ForecastInitialisation(modifier.wrapContentSize(Alignment.Center))
+            }
+
+            forecastUiState.lastLoadFailed -> {
+                Text(
+                    "Error",
+                    modifier = Modifier
+                        .wrapContentSize(Alignment.Center)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ForecastInitialisation(modifier: Modifier) {
+    CircularProgressIndicator(
+        modifier = modifier
+            .wrapContentSize(Alignment.Center)
+    )
+}
+
+@Composable
+private fun ForecastInformation(forecastData: ForecastData, refreshing: Boolean, refresh: () -> Unit, modifier: Modifier) {
+    val pullRefreshState = rememberPullRefreshState(refreshing, refresh)
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pullRefresh(state = pullRefreshState)
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(
+            text = forecastData.temperature.toString(),
+            style = MaterialTheme.typography.h3,
+            textAlign = TextAlign.Center,
+            modifier = modifier
+                .padding(100.dp)
+                .wrapContentSize(Alignment.Center)
+        )
+        PullRefreshIndicator(
+            scale = true,
+            refreshing = refreshing,
+            state = pullRefreshState,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
+    }
 }

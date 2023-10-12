@@ -6,13 +6,23 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.onSubscription
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import org.berendeev.weather.common.ApplicationCoroutineScope
 import org.berendeev.weather.data.model.ForecastData
 import org.berendeev.weather.models.Coordinates
 import javax.inject.Inject
+import kotlin.math.roundToInt
+import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
 //@Singleton
@@ -73,7 +83,9 @@ interface ForecastRepository {
      *
      * @return cashed according the rules
      */
-    fun observe(coordinates: Coordinates): Flow<State>
+    fun observe(): Flow<State>
+
+    suspend fun setCoordinates(coordinates: Coordinates)
 
     suspend fun refresh()
 
@@ -86,20 +98,55 @@ interface ForecastRepository {
     }
 }
 
-class FakeForecastRepository @Inject constructor() : ForecastRepository {
-    override fun observe(coordinates: Coordinates): Flow<ForecastRepository.State> {
-        return flow {
-            emit(ForecastRepository.State(null, false))
-            delay(4.seconds)
-            emit(ForecastRepository.State(forecast = ForecastData(10.0f), false))
-            delay(4.seconds)
-            emit(ForecastRepository.State(forecast = ForecastData(10.0f), true))
-            delay(4.seconds)
+class FakeForecastRepository @Inject constructor(@ApplicationCoroutineScope private val coroutineScope: CoroutineScope) : ForecastRepository {
+
+    private val rnd = Random(System.currentTimeMillis())
+    private var temperature = 0.0
+
+
+    private val mutex = Mutex()
+    private var initialized = false
+    private val state: MutableStateFlow<ForecastRepository.State> =
+        MutableStateFlow(ForecastRepository.State(null, false))
+
+    override fun observe(): Flow<ForecastRepository.State> {
+        return state
+            .onSubscription {
+                ensureInitializing()
+            }
+    }
+
+    private suspend fun ensureInitializing() {
+        withContext(Dispatchers.Default) {
+            mutex.withLock {
+                if (!initialized) {
+                    initialized = true
+                    coroutineScope.launch {
+                        updateTemperature()
+                        delay(2.seconds)
+                        state.value = ForecastRepository.State(forecast = ForecastData(temperature.toFloat()), false)
+                    }
+                }
+            }
         }
     }
 
-    override suspend fun refresh() {
+    private fun updateTemperature() {
+        temperature = rnd.nextDouble(0.0, 20.0).roundToInt().toDouble()
+    }
+
+    override suspend fun setCoordinates(coordinates: Coordinates) {
         TODO("Not yet implemented")
+    }
+
+    override suspend fun refresh() {
+        withContext(Dispatchers.Default) {
+            mutex.withLock {
+                updateTemperature()
+                delay(2.seconds)
+                state.value = ForecastRepository.State(forecast = ForecastData(temperature.toFloat()), false)
+            }
+        }
     }
 }
 

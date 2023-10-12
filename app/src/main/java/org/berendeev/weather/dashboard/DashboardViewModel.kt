@@ -10,17 +10,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import org.berendeev.weather.data.ForecastRepository
 import org.berendeev.weather.data.LocationModeRepository
 import org.berendeev.weather.data.model.LocationMode
-import org.berendeev.weather.models.Coordinates
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -38,8 +38,9 @@ class DashboardViewModel @Inject constructor(
                 LocationMode.Current -> TODO()
                 is LocationMode.Fixed -> {
                     emitAll(
-                        getWeatherDetailsUiStateForLocation(mode.coordinates)
-                            .map { DashboardUiState(mode, it) }
+                        forecastUiStateFlow().map {
+                            DashboardUiState(locationMode = mode, forecastUiState = it)
+                        }
                     )
                 }
             }
@@ -47,32 +48,33 @@ class DashboardViewModel @Inject constructor(
         }
     }.stateIn(viewModelScope, started = SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 
-    private fun getWeatherDetailsUiStateForLocation(coordinates: Coordinates): Flow<ForecastUiState> {
-        val forceUpdateFlow = Channel<Boolean>() {
+    private fun forecastUiStateFlow(): Flow<ForecastUiState> {
+        val refreshFlow = Channel<Unit>(capacity = 1) {
             Log.e("WeatherInfoViewModel", "update event was not delivered")
         }
-        val update: () -> Unit = { forceUpdateFlow.trySend(true) }
-        return forceUpdateFlow.consumeAsFlow()
-            .onStart { emit(false) }
-            .flatMapLatest { forceUpdate ->
-                combine(
-                    flow {
-                        if (forceUpdate) {
-                            emit(true)
-                            forecastRepository.refresh()
-                        }
-                        emit(false)
-                    },
-                    forecastRepository.observe(coordinates)
-                ) { isRefreshing, forecastState ->
-                    ForecastUiState(
-                        forecastData = forecastState.forecast,
-                        isUpdating = isRefreshing || forecastState.isInitialising,
-                        updateFailed = forecastState.loadingFailed,
-                        update = update
-                    )
-                }
-            }
 
+        val refresh: () -> Unit = { refreshFlow.trySend(Unit) }
+
+        val refreshingFlow = refreshFlow
+            .receiveAsFlow()
+            .flatMapConcat {
+                flow {
+                    emit(true)
+                    forecastRepository.refresh()
+                    emit(false)
+                }
+            }.onStart { emit(false) }
+
+        return combine(
+            refreshingFlow,
+            forecastRepository.observe()
+        ) { refreshing, forecastState ->
+            ForecastUiState(
+                forecastData = forecastState.forecast,
+                lastLoadFailed = forecastState.loadingFailed,
+                refresh = refresh.takeIf { !refreshing && !forecastState.isInitialising },
+                refreshing = refreshing
+            )
+        }
     }
 }

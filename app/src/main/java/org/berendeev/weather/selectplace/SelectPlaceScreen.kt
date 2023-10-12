@@ -37,8 +37,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun SelectPlaceRoute(
     onPlaceSelected: (SelectedPlace) -> Unit,
     onClose: () -> Unit,
-    viewModel: SelectPlaceViewModel = hiltViewModel(),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: SelectPlaceViewModel = hiltViewModel()
 ) {
     val selectedPlace = viewModel.selectedPlaceStateFlow.collectAsStateWithLifecycle().value
     LaunchedEffect(key1 = selectedPlace) {

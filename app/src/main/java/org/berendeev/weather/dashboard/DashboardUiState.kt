@@ -11,7 +11,7 @@ data class DashboardUiState(
 
 data class ForecastUiState(
     val forecastData: ForecastData? = null,
-    val isUpdating: Boolean = false,
-    val updateFailed: Boolean = false,
-    val update: (() -> Unit)? = null
+    val lastLoadFailed: Boolean = false,
+    val refresh: (() -> Unit)? = null,
+    val refreshing: Boolean = false,
 )
