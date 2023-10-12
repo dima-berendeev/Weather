@@ -80,18 +80,19 @@ import kotlin.time.Duration.Companion.seconds
 //}
 
 interface ForecastRepository {
-    val state: Flow<State>
+    /**
+     * state returns null if repo is not initialize
+     * state launch initialization after first subscription is registered
+     */
+    val state: Flow<State?>
 
     suspend fun setCoordinates(coordinates: Coordinates)
 
     suspend fun refresh()
 
-    data class State(
-        val forecast: ForecastData?,
-        val loadingFailed: Boolean,
-    ) {
-        val isInitialising get() = forecast == null && !loadingFailed
-        val isStale get() = loadingFailed
+    sealed interface State {
+        object Error : State
+        data class Success(val forecast: ForecastData, val lastUpdateFailed: Boolean) : State
     }
 }
 
@@ -103,8 +104,7 @@ class FakeForecastRepository @Inject constructor(@ApplicationCoroutineScope priv
 
     private val mutex = Mutex()
     private var initialized = false
-    override val state: MutableStateFlow<ForecastRepository.State> =
-        MutableStateFlow(ForecastRepository.State(null, false))
+    override val state: MutableStateFlow<ForecastRepository.State?> = MutableStateFlow(null)
 
     init {
         state
@@ -121,7 +121,7 @@ class FakeForecastRepository @Inject constructor(@ApplicationCoroutineScope priv
                     coroutineScope.launch {
                         updateTemperature()
                         delay(2.seconds)
-                        state.value = ForecastRepository.State(forecast = ForecastData(temperature.toFloat()), false)
+                        state.value = ForecastRepository.State.Success(forecast = ForecastData(temperature.toFloat()), false)
                     }
                 }
             }
@@ -141,7 +141,7 @@ class FakeForecastRepository @Inject constructor(@ApplicationCoroutineScope priv
             mutex.withLock {
                 updateTemperature()
                 delay(2.seconds)
-                state.value = ForecastRepository.State(forecast = ForecastData(temperature.toFloat()), false)
+                state.value = ForecastRepository.State.Success(ForecastData(temperature.toFloat()), false)
             }
         }
     }

@@ -69,12 +69,25 @@ class DashboardViewModel @Inject constructor(
             refreshingFlow,
             forecastRepository.state
         ) { refreshing, forecastState ->
-            ForecastUiState(
-                forecastData = forecastState.forecast,
-                lastLoadFailed = forecastState.loadingFailed,
-                refresh = refresh.takeIf { !refreshing && !forecastState.isInitialising },
-                refreshing = refreshing
-            )
+            when(forecastState){
+                is ForecastRepository.State.Success -> {
+                    ForecastUiState(
+                        forecastData = forecastState.forecast,
+                        lastLoadFailed = forecastState.lastUpdateFailed,
+                        refresh = refresh.takeIf { !refreshing },
+                        refreshing = refreshing
+                    )
+                }
+                ForecastRepository.State.Error -> TODO()
+                null -> {
+                    ForecastUiState(
+                        forecastData = null,
+                        lastLoadFailed = false,
+                        refresh = null,
+                        refreshing = false
+                    )
+                }
+            }
         }
     }
 }
