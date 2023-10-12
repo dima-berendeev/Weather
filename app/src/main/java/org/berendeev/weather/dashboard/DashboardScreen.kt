@@ -152,6 +152,7 @@ private fun ForecastInitialisation(modifier: Modifier) {
     )
 }
 
+@ExperimentalMaterialApi
 @Composable
 private fun ForecastInformation(forecastData: ForecastData, refreshing: Boolean, refresh: () -> Unit, modifier: Modifier) {
     val pullRefreshState = rememberPullRefreshState(refreshing, refresh)

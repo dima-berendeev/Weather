@@ -12,6 +12,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -79,11 +80,7 @@ import kotlin.time.Duration.Companion.seconds
 //}
 
 interface ForecastRepository {
-    /**
-     *
-     * @return cashed according the rules
-     */
-    fun observe(): Flow<State>
+    val state: Flow<State>
 
     suspend fun setCoordinates(coordinates: Coordinates)
 
@@ -106,14 +103,14 @@ class FakeForecastRepository @Inject constructor(@ApplicationCoroutineScope priv
 
     private val mutex = Mutex()
     private var initialized = false
-    private val state: MutableStateFlow<ForecastRepository.State> =
+    override val state: MutableStateFlow<ForecastRepository.State> =
         MutableStateFlow(ForecastRepository.State(null, false))
 
-    override fun observe(): Flow<ForecastRepository.State> {
-        return state
+    init {
+        state
             .onSubscription {
                 ensureInitializing()
-            }
+            }.launchIn(coroutineScope)
     }
 
     private suspend fun ensureInitializing() {

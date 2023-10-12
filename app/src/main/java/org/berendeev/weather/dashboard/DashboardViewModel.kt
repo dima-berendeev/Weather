@@ -67,7 +67,7 @@ class DashboardViewModel @Inject constructor(
 
         return combine(
             refreshingFlow,
-            forecastRepository.observe()
+            forecastRepository.state
         ) { refreshing, forecastState ->
             ForecastUiState(
                 forecastData = forecastState.forecast,
