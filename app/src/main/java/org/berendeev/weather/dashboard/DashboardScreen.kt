@@ -43,18 +43,6 @@ fun DashboardRoute(
     DashboardScreen(uiState, onCurrentCityClick = onCurrentCityClick)
 }
 
-@Preview(device = Devices.NEXUS_6)
-@Composable
-fun DashboardScreenPreview() {
-    DashboardScreen(
-        uiState = DashboardUiState(
-            LocationMode.Current,
-            ForecastUiState(forecastData = ForecastData(10f))
-        ),
-        onCurrentCityClick = { /*TODO*/ }
-    )
-}
-
 @Composable
 fun DashboardScreen(
     uiState: DashboardUiState,
@@ -117,29 +105,20 @@ private fun SearchBar(locationMode: LocationMode, onCurrentCityClick: () -> Unit
 }
 
 @Composable
-private fun Forecast(forecastUiState: ForecastUiState, modifier: Modifier = Modifier) {
+private fun Forecast(forecastUiState: ForecastUiState?, modifier: Modifier = Modifier) {
     Box(modifier.fillMaxSize()) {
-        when {
-            forecastUiState.forecastData != null -> {
+        when (forecastUiState) {
+            is ForecastUiState.Success -> {
                 ForecastInformation(
                     forecastUiState.forecastData,
                     forecastUiState.refreshing,
-                    forecastUiState.refresh ?: {},
+                    forecastUiState.refresh,
                     modifier
                 )
             }
 
-            !forecastUiState.lastLoadFailed -> {
-                ForecastInitialisation(modifier.wrapContentSize(Alignment.Center))
-            }
-
-            forecastUiState.lastLoadFailed -> {
-                Text(
-                    "Error",
-                    modifier = Modifier
-                        .wrapContentSize(Alignment.Center)
-                )
-            }
+            is ForecastUiState.Error -> TODO()
+            null -> ForecastInitialisation(modifier.wrapContentSize(Alignment.Center))
         }
     }
 }
@@ -178,4 +157,33 @@ private fun ForecastInformation(forecastData: ForecastData, refreshing: Boolean,
             modifier = Modifier.align(Alignment.TopCenter)
         )
     }
+}
+
+@Preview(device = Devices.NEXUS_6)
+@Composable
+private fun SuccessPreview() {
+    DashboardScreen(
+        uiState = DashboardUiState(
+            LocationMode.Current,
+            ForecastUiState.Success(
+                forecastData = ForecastData(10f),
+                refreshing = false,
+                refresh = {},
+                lastLoadFailed = false
+            )
+        ),
+        onCurrentCityClick = { /*TODO*/ }
+    )
+}
+
+@Preview(device = Devices.NEXUS_6)
+@Composable
+private fun ForecastInitializingPreview() {
+    DashboardScreen(
+        uiState = DashboardUiState(
+            LocationMode.Current,
+            null
+        ),
+        onCurrentCityClick = { /*TODO*/ }
+    )
 }

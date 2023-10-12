@@ -48,7 +48,7 @@ class DashboardViewModel @Inject constructor(
         }
     }.stateIn(viewModelScope, started = SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 
-    private fun forecastUiStateFlow(): Flow<ForecastUiState> {
+    private fun forecastUiStateFlow(): Flow<ForecastUiState?> {
         val refreshFlow = Channel<Unit>(capacity = 1) {
             Log.e("WeatherInfoViewModel", "update event was not delivered")
         }
@@ -71,22 +71,15 @@ class DashboardViewModel @Inject constructor(
         ) { refreshing, forecastState ->
             when(forecastState){
                 is ForecastRepository.State.Success -> {
-                    ForecastUiState(
+                    ForecastUiState.Success(
                         forecastData = forecastState.forecast,
                         lastLoadFailed = forecastState.lastUpdateFailed,
-                        refresh = refresh.takeIf { !refreshing },
+                        refresh = refresh,
                         refreshing = refreshing
                     )
                 }
                 ForecastRepository.State.Error -> TODO()
-                null -> {
-                    ForecastUiState(
-                        forecastData = null,
-                        lastLoadFailed = false,
-                        refresh = null,
-                        refreshing = false
-                    )
-                }
+                null -> null
             }
         }
     }

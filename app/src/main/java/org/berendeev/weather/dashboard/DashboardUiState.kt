@@ -5,13 +5,20 @@ import org.berendeev.weather.data.model.LocationMode
 
 data class DashboardUiState(
     val locationMode: LocationMode? = null,
-    val forecastUiState: ForecastUiState = ForecastUiState(),
+    val forecastUiState: ForecastUiState? = null,
     val requireLocationPermission: Boolean = false,
 )
 
-data class ForecastUiState(
-    val forecastData: ForecastData? = null,
-    val lastLoadFailed: Boolean = false,
-    val refresh: (() -> Unit)? = null,
-    val refreshing: Boolean = false,
-)
+sealed interface ForecastUiState {
+    data class Success(
+        val forecastData: ForecastData,
+        val refreshing: Boolean,
+        val refresh: (() -> Unit),
+        val lastLoadFailed: Boolean
+    ) : ForecastUiState
+
+    data class Error(
+        val updating: Boolean,
+        val update: () -> Unit
+    ) : ForecastUiState
+}
