@@ -6,6 +6,7 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,63 +22,13 @@ import kotlinx.coroutines.withContext
 import org.berendeev.weather.common.ApplicationCoroutineScope
 import org.berendeev.weather.data.model.ForecastData
 import org.berendeev.weather.models.Coordinates
+import org.berendeev.weather.network.ForecastDatasource
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.math.roundToInt
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
-
-//@Singleton
-//class ForecastRepository @Inject constructor(
-//    private val forecastDatasource: ForecastDatasource,
-//    private val locationProvider: LocationProvider,
-//) {
-//    private val weatherLocationState = MutableStateFlow<WeatherLocation>(WeatherLocation.Current)
-//
-//    val state: Flow<State> = weatherLocationState.flatMapLatest { weatherLocation ->
-//        flow {
-//            val initialState = State(
-//                weatherLocation = weatherLocation,
-//                weatherInfo = null
-//            )
-//            emit(initialState)
-//            val coordinates = when (weatherLocation) {
-//                WeatherLocation.Current -> {
-//                    locationProvider.getCurrentLocation().coordinates
-//                }
-//
-//                is WeatherLocation.Fixed -> {
-//                    weatherLocation.coordinates
-//                }
-//            }
-//
-//            val apiModel = forecastDatasource.fetchForecast(coordinates)
-//            emit(
-//                initialState.copy(
-//                    weatherInfo = WeatherInfo(
-//                        apiModel.current_weather.temperature
-//                    )
-//                )
-//            )
-//        }
-//    }
-//
-//    fun setWeatherLocation(weatherLocation: WeatherLocation) {
-//        weatherLocationState.value = weatherLocation
-//    }
-//
-//    fun update() {
-//
-//    }
-//
-//    data class State(
-//        val weatherLocation: WeatherLocation,
-//        val weatherInfo: WeatherInfo?,
-//    )
-//
-//    data class WeatherInfo(
-//        val temperature: Float
-//    )
-//}
 
 interface ForecastRepository {
     /**
@@ -96,6 +47,80 @@ interface ForecastRepository {
     }
 }
 
+@Singleton
+class ForecastRepositoryImpl @Inject constructor(
+    private val forecastDatasource: ForecastDatasource,
+    @ApplicationCoroutineScope private val coroutineScope: CoroutineScope,
+) : ForecastRepository {
+    override val state: MutableStateFlow<ForecastRepository.State?> = MutableStateFlow(null)
+
+    private val mutex = Mutex()
+    private var initialized = AtomicBoolean(false)
+    private var coordinates: Coordinates? = null
+
+    init {
+        state
+            .onSubscription {
+                ensureInitialization()
+            }.launchIn(coroutineScope)
+    }
+
+    private suspend fun ensureInitialization() {
+        if (!initialized.getAndSet(true)) {
+            coroutineScope.launch {
+                refresh()
+            }
+        }
+    }
+
+    override suspend fun setCoordinates(coordinates: Coordinates) {
+        mutex.withLock {
+            this.coordinates = coordinates
+            state.value = null
+            loadNewValues()
+        }
+    }
+
+    override suspend fun refresh() {
+        mutex.withLock {
+            loadNewValues()
+        }
+    }
+
+    private suspend fun loadNewValues() {
+        val coordinates = coordinates ?: return
+
+        try {
+            val apiModel = withContext(Dispatchers.Default) {
+                forecastDatasource.fetchForecast(coordinates)
+            }
+            state.value = ForecastRepository.State.Success(ForecastData(apiModel.current_weather.temperature), false)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            val prevValue = state.value
+            state.value = when (prevValue) {
+                ForecastRepository.State.Error -> ForecastRepository.State.Error
+                is ForecastRepository.State.Success -> prevValue.copy(lastUpdateFailed = true)
+                null -> ForecastRepository.State.Error
+            }
+        }
+    }
+}
+
+class ForecastRepositoryProxy @Inject constructor(fakeForecastRepository: FakeForecastRepository) : ForecastRepository {
+    override val state: Flow<ForecastRepository.State?>
+        get() = TODO("Not yet implemented")
+
+    override suspend fun setCoordinates(coordinates: Coordinates) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun refresh() {
+        TODO("Not yet implemented")
+    }
+}
+
 class FakeForecastRepository @Inject constructor(@ApplicationCoroutineScope private val coroutineScope: CoroutineScope) : ForecastRepository {
 
     private val rnd = Random(System.currentTimeMillis())
@@ -103,7 +128,7 @@ class FakeForecastRepository @Inject constructor(@ApplicationCoroutineScope priv
 
 
     private val mutex = Mutex()
-    private var initialized = false
+    private var initialized = AtomicBoolean(false)
     override val state: MutableStateFlow<ForecastRepository.State?> = MutableStateFlow(null)
 
     init {
@@ -114,15 +139,10 @@ class FakeForecastRepository @Inject constructor(@ApplicationCoroutineScope priv
     }
 
     private suspend fun ensureInitializing() {
-        withContext(Dispatchers.Default) {
-            mutex.withLock {
-                if (!initialized) {
-                    initialized = true
-                    coroutineScope.launch {
-                        updateTemperature()
-                        delay(2.seconds)
-                        state.value = ForecastRepository.State.Success(forecast = ForecastData(temperature.toFloat()), false)
-                    }
+        mutex.withLock {
+            if (!initialized.getAndSet(true)) {
+                coroutineScope.launch {
+                    refresh()
                 }
             }
         }
@@ -133,21 +153,23 @@ class FakeForecastRepository @Inject constructor(@ApplicationCoroutineScope priv
     }
 
     override suspend fun setCoordinates(coordinates: Coordinates) {
-        state.value = null
-        loadNewValues()
+        mutex.withLock {
+            state.value = null
+            loadNewValues()
+        }
     }
 
     override suspend fun refresh() {
-        loadNewValues()
+        mutex.withLock {
+            loadNewValues()
+        }
     }
 
     private suspend fun loadNewValues() {
         withContext(Dispatchers.Default) {
-            mutex.withLock {
-                delay(2.seconds)
-                updateTemperature()
-                state.value = ForecastRepository.State.Success(ForecastData(temperature.toFloat()), false)
-            }
+            delay(2.seconds)
+            updateTemperature()
+            state.value = ForecastRepository.State.Success(ForecastData(temperature.toFloat()), false)
         }
     }
 }
