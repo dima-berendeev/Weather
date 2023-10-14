@@ -38,7 +38,6 @@ class DashboardViewModel @Inject constructor(
                 when (mode) {
                     LocationMode.Current -> TODO()
                     is LocationMode.Fixed -> {
-                        forecastRepository.setCoordinates(mode.coordinates)
                         emitAll(
                             forecastUiStateFlow().map {
                                 DashboardUiState(locationMode = mode, forecastUiState = it)

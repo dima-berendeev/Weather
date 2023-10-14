@@ -200,5 +200,6 @@ class FakeForecastRepository @Inject constructor(@ApplicationCoroutineScope priv
 @InstallIn(SingletonComponent::class)
 abstract class ForecastRepositoryRepoModule {
     @Binds
+    @Singleton
     abstract fun binds(impl: ForecastRepositoryProxy): ForecastRepository
 }
