@@ -13,6 +13,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
@@ -108,16 +111,35 @@ class ForecastRepositoryImpl @Inject constructor(
     }
 }
 
-class ForecastRepositoryProxy @Inject constructor(fakeForecastRepository: FakeForecastRepository) : ForecastRepository {
-    override val state: Flow<ForecastRepository.State?>
-        get() = TODO("Not yet implemented")
-
-    override suspend fun setCoordinates(coordinates: Coordinates) {
-        TODO("Not yet implemented")
+class ForecastRepositoryProxy @Inject constructor(
+    private val forecastRepository: ForecastRepositoryImpl,
+    private val fakeForecastRepository: FakeForecastRepository,
+    private val settingsRepo: DevSettingsRepo
+) : ForecastRepository {
+    override val state: Flow<ForecastRepository.State?> = settingsRepo.state.filterNotNull().flatMapLatest {
+        if (it.useFakeForecastRepo) {
+            fakeForecastRepository.state
+        } else {
+            forecastRepository.state
+        }
     }
 
+    override suspend fun setCoordinates(coordinates: Coordinates) {
+        if (useFakeForecastRepo()) {
+            fakeForecastRepository.setCoordinates(coordinates)
+        } else {
+            forecastRepository.setCoordinates(coordinates)
+        }
+    }
+
+    private suspend fun useFakeForecastRepo() = settingsRepo.state.filterNotNull().first().useFakeForecastRepo
+
     override suspend fun refresh() {
-        TODO("Not yet implemented")
+        if (useFakeForecastRepo()) {
+            fakeForecastRepository.refresh()
+        } else {
+            forecastRepository.refresh()
+        }
     }
 }
 
@@ -178,5 +200,5 @@ class FakeForecastRepository @Inject constructor(@ApplicationCoroutineScope priv
 @InstallIn(SingletonComponent::class)
 abstract class ForecastRepositoryRepoModule {
     @Binds
-    abstract fun binds(impl: FakeForecastRepository): ForecastRepository
+    abstract fun binds(impl: ForecastRepositoryProxy): ForecastRepository
 }

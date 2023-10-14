@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -19,7 +20,6 @@ import androidx.navigation.compose.rememberNavController
 import org.berendeev.weather.dashboard.DashboardRoute
 import org.berendeev.weather.data.model.LocationMode
 import org.berendeev.weather.devmenu.devMenuScreen
-import org.berendeev.weather.devmenu.navigateToDevMenu
 import org.berendeev.weather.selectplace.SelectPlaceRoute
 import org.berendeev.weather.selectplace.SelectedPlace
 
@@ -31,14 +31,44 @@ fun MainScreen() {
             BottomAppBar {
                 BottomNavigationItem(
                     selected = false,
-                    onClick = { navController.navigate("dashboard") },
+                    onClick = {
+                        navController.navigate("dashboard") {
+
+                            // Pop up to the start destination of the graph to
+                            // avoid building up a large stack of destinations
+                            // on the back stack as users select items
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            // Avoid multiple copies of the same destination when
+                            // reselecting the same item
+                            launchSingleTop = true
+                            // Restore state when reselecting a previously selected item
+                            restoreState = true
+
+                        }
+                    },
                     icon = {
                         Icon(Icons.Default.Home, contentDescription = "Home")
                     }
                 )
                 BottomNavigationItem(
                     selected = false,
-                    onClick = { navController.navigateToDevMenu() },
+                    onClick = {
+                        navController.navigate("dev_menu_route") {
+                            // Pop up to the start destination of the graph to
+                            // avoid building up a large stack of destinations
+                            // on the back stack as users select items
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            // Avoid multiple copies of the same destination when
+                            // reselecting the same item
+                            launchSingleTop = true
+                            // Restore state when reselecting a previously selected item
+                            restoreState = true
+                        }
+                    },
                     icon = {
                         Icon(Icons.Default.Build, contentDescription = "Developer menu")
                     }

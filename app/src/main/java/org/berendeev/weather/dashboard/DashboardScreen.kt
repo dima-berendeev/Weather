@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.berendeev.weather.data.model.ForecastData
 import org.berendeev.weather.data.model.LocationMode
 
@@ -39,7 +40,7 @@ fun DashboardRoute(
     viewModel: DashboardViewModel = hiltViewModel(),
     onCurrentCityClick: () -> Unit
 ) {
-    val uiState = viewModel.currentWeatherUiState.collectAsState().value
+    val uiState = viewModel.currentWeatherUiState.collectAsStateWithLifecycle().value
     DashboardScreen(uiState, onCurrentCityClick = onCurrentCityClick)
 }
 
