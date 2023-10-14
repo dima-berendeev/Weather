@@ -5,6 +5,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.berendeev.weather.common.ApplicationCoroutineScope
+import org.berendeev.weather.data.CurrentLocationRepository
 import org.berendeev.weather.data.ForecastRepository
 import org.berendeev.weather.data.LocationModeRepository
 import org.berendeev.weather.data.model.LocationMode
@@ -14,13 +15,17 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val locationModeRepository: LocationModeRepository,
     private val forecastRepository: ForecastRepository,
+    private val currentLocationRepository: CurrentLocationRepository,
     @ApplicationCoroutineScope private val applicationCoroutineScope: CoroutineScope
 ) : ViewModel() {
     fun locationMode(locationMode: LocationMode) {
         applicationCoroutineScope.launch {
             locationModeRepository.setMode(locationMode)
             when (locationMode) {
-                LocationMode.Current -> {}
+                LocationMode.Current -> {
+                    forecastRepository.clear()
+                }
+
                 is LocationMode.Fixed -> forecastRepository.setCoordinates(locationMode.coordinates)
             }
         }

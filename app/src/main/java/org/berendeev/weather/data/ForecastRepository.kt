@@ -10,6 +10,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,6 +42,8 @@ interface ForecastRepository {
     val state: Flow<State?>
 
     suspend fun setCoordinates(coordinates: Coordinates)
+
+    suspend fun clear()
 
     suspend fun refresh()
 
@@ -81,6 +84,16 @@ class ForecastRepositoryImpl @Inject constructor(
             this.coordinates = coordinates
             state.value = null
             loadNewValues()
+        }
+    }
+
+    override suspend fun clear() {
+        withContext(NonCancellable) {
+            mutex.withLock {
+                coordinates = null
+                initialized.set(false)
+                state.value = null
+            }
         }
     }
 
@@ -131,7 +144,13 @@ class ForecastRepositoryProxy @Inject constructor(
             forecastRepository.setCoordinates(coordinates)
         }
     }
-
+    override suspend fun clear() {
+        if (useFakeForecastRepo()) {
+            fakeForecastRepository.clear()
+        } else {
+            forecastRepository.clear()
+        }
+    }
     private suspend fun useFakeForecastRepo() = settingsRepo.state.filterNotNull().first().useFakeForecastRepo
 
     override suspend fun refresh() {
@@ -166,6 +185,15 @@ class FakeForecastRepository @Inject constructor(@ApplicationCoroutineScope priv
                 coroutineScope.launch {
                     refresh()
                 }
+            }
+        }
+    }
+
+    override suspend fun clear() {
+        withContext(NonCancellable) {
+            mutex.withLock {
+                initialized.set(false)
+                state.value = null
             }
         }
     }
