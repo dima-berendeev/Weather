@@ -14,8 +14,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val locationModeRepository: LocationModeRepository,
-    private val forecastRepository: ForecastRepository,
-    private val currentLocationRepository: CurrentLocationRepository,
+//    private val forecastRepository: ForecastRepository,
+//    private val currentLocationRepository: CurrentLocationRepository,
     @ApplicationCoroutineScope private val applicationCoroutineScope: CoroutineScope
 ) : ViewModel() {
     fun locationMode(locationMode: LocationMode) {
@@ -23,10 +23,10 @@ class MainViewModel @Inject constructor(
             locationModeRepository.setMode(locationMode)
             when (locationMode) {
                 LocationMode.Current -> {
-                    forecastRepository.clear()
                 }
 
-                is LocationMode.Fixed -> forecastRepository.setCoordinates(locationMode.coordinates)
+                is LocationMode.Fixed -> {
+                }
             }
         }
     }

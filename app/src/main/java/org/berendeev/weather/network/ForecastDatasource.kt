@@ -3,10 +3,12 @@ package org.berendeev.weather.network
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.berendeev.weather.models.Coordinates
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * https://open-meteo.com/en/docs
@@ -18,6 +20,7 @@ class ForecastDatasource @Inject constructor(private val httpClient: HttpClient)
 
     suspend fun fetchForecast(coordinates: Coordinates): ApiModel {
         if (true) {
+            delay(2.seconds)
             return json.decodeFromString(mockJsonString)
         }
 
