@@ -3,7 +3,6 @@ package org.berendeev.weather.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,39 +51,31 @@ class DashboardViewModel @Inject constructor(
         }.stateIn(viewModelScope, started = SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 
     private fun forecastUiStateFlow(coordinates: Coordinates): Flow<ForecastUiState?> {
-        val mutes = Mutex()
         val updatingState = MutableStateFlow<Boolean>(false)
-
+        val mutex = Mutex()
+        val request = ForecastRepository.Request(coordinates)
+        val refresh: () -> Unit = {
+            viewModelScope.launch {
+                mutex.withLock {
+                    updatingState.value = true
+                    request.update()
+                    updatingState.value = false
+                }
+            }
+        }
         return combine(
             updatingState,
-            forecastRepository.observe(coordinates)
+            forecastRepository.observe(request)
         ) { updating, state: ForecastRepository.State? ->
             when (state) {
                 is ForecastRepository.State.Error -> {
-                    ForecastUiState.Error(updating) {
-                        viewModelScope.launch {
-                            mutes.withLock {
-                                updatingState.value = true
-                                state.update()
-                                updatingState.value = false
-                            }
-                        }
-                    }
+                    ForecastUiState.Error(updating, refresh)
                 }
 
                 is ForecastRepository.State.Success -> {
                     ForecastUiState.Success(
                         state.forecast,
-                        updating,
-                        {
-                            viewModelScope.launch(Dispatchers.Default) {
-                                mutes.withLock {
-                                    updatingState.value = true
-                                    state.update()
-                                    updatingState.value = false
-                                }
-                            }
-                        },
+                        updating, refresh,
                         state.lastUpdateFailed
                     )
                 }

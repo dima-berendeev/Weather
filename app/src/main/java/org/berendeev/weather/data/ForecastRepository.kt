@@ -7,14 +7,13 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import org.berendeev.weather.common.ApplicationCoroutineScope
 import org.berendeev.weather.data.model.ForecastData
@@ -24,11 +23,20 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 interface ForecastRepository {
-    fun observe(coordinates: Coordinates): Flow<State?>
+    fun observe(request: Request): Flow<State?>
+
+    class Request(val coordinates: Coordinates) {
+        internal val channel = Channel<CompletableDeferred<Unit>>()
+        suspend fun update() {
+            val deferred = CompletableDeferred<Unit>()
+            channel.send(deferred)
+            deferred.await()
+        }
+    }
 
     sealed interface State {
-        data class Error(val update: suspend () -> Unit) : State
-        data class Success(val forecast: ForecastData, val lastUpdateFailed: Boolean, val update: suspend () -> Unit) : State
+        data class Error(val message: String?) : State
+        data class Success(val forecast: ForecastData, val lastUpdateFailed: Boolean) : State
     }
 }
 
@@ -38,39 +46,30 @@ class ForecastRepositoryImpl @Inject constructor(
     @ApplicationCoroutineScope private val coroutineScope: CoroutineScope,
 ) : ForecastRepository {
 
-    override fun observe(coordinates: Coordinates): Flow<ForecastRepository.State?> {
-        val state = MutableStateFlow<ForecastRepository.State?>(null)
-        val mutex = Mutex()
-
-        suspend fun load() {
-            if (mutex.isLocked) return
-            mutex.withLock {
-                try {
-                    val apiModel: ForecastDatasource.ApiModel = withContext(Dispatchers.IO) {
-                        forecastDatasource.fetchForecast(coordinates)
-                    }
-                    state.value = ForecastRepository.State.Success(ForecastData(apiModel.current_weather.temperature), false) {
-                        load()
-                    }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Throwable) {
-                    val prevValue = state.value
-                    state.value = when (prevValue) {
-                        is ForecastRepository.State.Error, null -> ForecastRepository.State.Error {
-                            load()
-                        }
-
-                        is ForecastRepository.State.Success -> prevValue.copy(lastUpdateFailed = true)
-                    }
+    override fun observe(request: ForecastRepository.Request) = flow<ForecastRepository.State?> {
+        emit(null)
+        var apiModel: ForecastDatasource.ApiModel? = null
+        var deferred: CompletableDeferred<Unit>? = null
+        while (true) {
+            val state = try {
+                val newApiModel = withContext(Dispatchers.IO) {
+                    forecastDatasource.fetchForecast(request.coordinates)
+                }
+                apiModel = newApiModel
+                ForecastRepository.State.Success(ForecastData(apiModel.current_weather.temperature), false)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                if (apiModel == null) {
+                    ForecastRepository.State.Error(e.message)
+                } else {
+                    ForecastRepository.State.Success(ForecastData(apiModel.current_weather.temperature), true)
                 }
             }
+            deferred?.complete(Unit)
+            emit(state)
+            deferred = request.channel.receive()
         }
-        coroutineScope.launch {
-            load()
-        }
-
-        return state
     }
 }
 
