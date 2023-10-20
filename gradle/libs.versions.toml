@@ -1,0 +1,10 @@
+[versions]
+
+[libraries]
+io-mockk = { group = "io.mockk", name = "mockk", version = "1.13.4" }
+turbine = { group = "app.cash.turbine", name = "turbine", version = "1.0.0" }
+kotlin-kotlinTest = { group = "org.jetbrains.kotlin", name = "kotlin-test", version = "1.9.10" }
+
+[plugins]
+
+[bundles]

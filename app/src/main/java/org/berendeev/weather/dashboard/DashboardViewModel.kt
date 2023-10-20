@@ -66,13 +66,13 @@ class DashboardViewModel @Inject constructor(
         return combine(
             updatingState,
             forecastRepository.observe(request)
-        ) { updating, state: ForecastRepository.State? ->
+        ) { updating, state: ForecastRepository.Result? ->
             when (state) {
-                is ForecastRepository.State.Error -> {
+                is ForecastRepository.Result.Error -> {
                     ForecastUiState.Error(updating, refresh)
                 }
 
-                is ForecastRepository.State.Success -> {
+                is ForecastRepository.Result.Success -> {
                     ForecastUiState.Success(
                         state.forecast,
                         updating, refresh,

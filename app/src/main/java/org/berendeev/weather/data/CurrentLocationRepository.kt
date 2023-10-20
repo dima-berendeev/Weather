@@ -5,7 +5,7 @@ import org.berendeev.weather.models.Coordinates
 import java.time.LocalDateTime
 
 interface CurrentLocationRepository {
-    val state: StateFlow<ForecastRepository.State>
+    val state: StateFlow<ForecastRepository.Result>
     fun refresh()
 
     sealed interface State {
